@@ -264,7 +264,7 @@ The MQTT client task handles unexpected disconnections in the MQTT or Wi-Fi conn
 
 <details><summary><b>AWS IoT MQTT</b></summary>
 
- 1. Set up the MQTT device (also known as a *Thing*) in the AWS IoT Core as described in the [Getting started with AWS IoT tutorial](https://docs.aws.amazon.com/iot/latest/developerguide/iot-gs.html). Please don't create neither a client certificate not a corresponding private key.
+ 1. Set up the MQTT device (also known as a *Thing*) in the AWS IoT Core as described in the [Getting started with AWS IoT tutorial](https://docs.aws.amazon.com/iot/latest/developerguide/iot-gs.html). Please don't create neither a client certificate not a corresponding private key as they will be provided by the Secure Element
 
     **Note:** While setting up your device, ensure that the policy associated with this device permits all MQTT operations (*iot:Connect*, *iot:Publish*, *iot:Receive*, and *iot:Subscribe*) for the resource used by this device. For testing purposes, it is recommended to have the following policy document which allows all *MQTT Policy Actions* on all *Amazon Resource Names (ARNs)*.
     ```
