@@ -124,19 +124,73 @@ Various CLI tools include a `-h` option that prints help information to the term
 
 2. Modify the user configuration files in the *configs* directory as follows:
 
-      1. **Wi-Fi Configuration:** Set the Wi-Fi credentials in *configs/wifi_config.h*: Modify the macros `WIFI_SSID`, `WIFI_PASSWORD`, and `WIFI_SECURITY` to match with that of the Wi-Fi network that you want to connect.
+    1. **Wi-Fi Configuration:** Set the Wi-Fi credentials in *configs/wifi_config.h*: Modify the macros `WIFI_SSID`, `WIFI_PASSWORD`, and `WIFI_SECURITY` to match with that of the Wi-Fi network that you want to connect.
 
-      2. **MQTT Configuration:** Set up the MQTT Client and configure the credentials in *configs/mqtt_client_config.h*. Some of the important configuration macros are as follows:
+    2. **MQTT Configuration:** Set up the MQTT Client and configure the credentials in *configs/mqtt_client_config.h*. Some of the important configuration macros are as follows:
+      
+        * **AWS IoT MQTT:**  Set up the MQTT device (also known as a *Thing*) in the AWS IoT Core as described in the [Getting started with AWS IoT tutorial](https://docs.aws.amazon.com/iot/latest/developerguide/iot-gs.html). Please don't create neither a client certificate not a corresponding private key as they will be provided by the Secure Element
 
-         - `MQTT_BROKER_ADDRESS`: Hostname of the MQTT Broker
+            **Note:** While setting up your device, ensure that the policy associated with this device permits all MQTT operations (*iot:Connect*, *iot:Publish*, *iot:Receive*, and *iot:Subscribe*) for the resource used by this device. For testing purposes, it is recommended to have the following policy document which allows all *MQTT Policy Actions* on all *Amazon Resource Names (ARNs)*.
+            ```
+            {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Action": "iot:*",
+                        "Resource": "*"
+                    }
+                ]
+            }
+            ```
+   
+        * Program the board using one of the following (you don't need any extra configuration for the first part):
 
-         - `MQTT_PORT`: Port number to be used for the MQTT connection. As specified by IANA (Internet Assigned Numbers Authority), port numbers assigned for MQTT protocol are *1883* for non-secure connections and *8883* for secure connections. However, MQTT Brokers may use other ports. Configure this macro as specified by the MQTT Broker.
+            <details><summary><b>Using Eclipse IDE for ModusToolbox</b></summary>
 
-         - `MQTT_SECURE_CONNECTION`: Set this macro to `1` if a secure (TLS) connection to the MQTT Broker is  required to be established; else `0`.
+                  1. Select the application project in the Project Explorer.
 
-         - `MQTT_USERNAME` and `MQTT_PASSWORD`: User name and password for client authentication and authorization, if required by the MQTT Broker. However, note that this information is generally not encrypted and the password is sent in plain text. Therefore, this is not a recommended method of client authentication.
+                  2. In the **Quick Panel**, scroll down, and click **\<Application Name> Program (KitProg3_MiniProg4)**.
+            </details>
 
-         - `ROOT_CA_CERTIFICATE`: Root CA certificate of the MQTT Broker
+            <details><summary><b>Using CLI</b></summary>
+
+                 From the terminal, execute the `make program` command to build and program the application using the default toolchain to the default target. You can specify a target and toolchain manually:
+                  ```
+                  make program TARGET=<BSP> TOOLCHAIN=<toolchain>
+                  ```
+
+                  Example:
+                  ```
+                  make program TARGET=CYSBSYSKIT-DEV-01 TOOLCHAIN=GCC_ARM
+                  ```
+               </details>
+
+               After programming, the application starts automatically. Observe the messages on the UART terminal, and wait for the device to make all the required connections.
+
+               **Figure 1. Application initialization status**
+
+               ![](images/application_initialization.png)
+
+        * Open a terminal program and select the KitProg3 COM port. Set the serial port parameters to 8N1 and 115200 baud.
+        
+        * Save the output X.509 certificate which is framed with `-----BEGIN CERTIFICATE-----` and `-----BEGIN CERTIFICATE-----` you see on the terminal screen. This is a pre-provisioned certificate which belongs to your board and follow the steps mentioned in the terminal output there.
+
+        * In the *configs/mqtt_client_config.h* file, set `MQTT_BROKER_ADDRESS` and `MQTT_SNI_HOSTNAME` to your custom endpoint on the **Settings** page of the AWS IoT Console. This has the format `ABCDEFG1234567-ats.iot.<region>.amazonaws.com`. To get you endpoint:
+
+            - Browse to the [AWS IoT console](https://console.aws.amazon.com).
+            - In the navigation pane, choose Settings.
+            - Your AWS IoT endpoint is displayed in Endpoint. It should look like 1234567890123-ats.iot.us-east-1.amazonaws.com. Make a note of this endpoint.
+
+        * Set the macros `MQTT_PORT` to `8883` and `MQTT_SECURE_CONNECTION` to `1` in the *configs/mqtt_client_config.h* file.
+
+        * Download the following certificate(-s):
+            - Root CA "ECC 256 bit key: Amazon Root CA 3" for AWS IoT from [CA Certificates for Server Authentication](https://docs.aws.amazon.com/iot/latest/developerguide/server-authentication.html#server-authentication-certs). In case the ECDHE_ECDSA based TLS ciphersuite is selected should be the [Amazon Root CA 3](https://www.amazontrust.com/repository/AmazonRootCA3.pem) (Default), in case the ECDHE_RSA based TLS ciphersuite is in use another CA should be selected: [Amazon Root CA 1](https://www.amazontrust.com/repository/AmazonRootCA1.pem)
+
+        * Using these certificates, enter the following parameters in *mqtt_client_config.h* in Privacy-Enhanced Mail (PEM) format:
+            - `ROOT_CA_CERTIFICATE` - Root CA certificate
+
+              You can either convert the values to strings manually following the format shown in *mqtt_client_config.h* or you can use the HTML utility available [here](https://github.com/cypresssemiconductorco/amazon-freertos/blob/master/tools/certificate_configuration/PEMfileToCString.html) to convert the certificates and keys from PEM format to C string format. You need to clone the repository from GitHub to use the utility.
 
          See [Setting up the MQTT Broker](#setting-up-the-mqtt-broker) to learn how to configure these macros for AWS IoT.
 
@@ -146,36 +200,6 @@ Various CLI tools include a `-h` option that prints help information to the term
          - *configs/core_mqtt_config.h* used by the [MQTT library](https://github.com/cypresssemiconductorco/mqtt)
 
          - *configs/FreeRTOSConfig.h* used by the [FreeRTOS library](https://github.com/cypresssemiconductorco/freertos)
-
-3. Open a terminal program and select the KitProg3 COM port. Set the serial port parameters to 8N1 and 115200 baud.
-
-4. Program the board using one of the following:
-
-   <details><summary><b>Using Eclipse IDE for ModusToolbox</b></summary>
-
-      1. Select the application project in the Project Explorer.
-
-      2. In the **Quick Panel**, scroll down, and click **\<Application Name> Program (KitProg3_MiniProg4)**.
-      </details>
-
-   <details><summary><b>Using CLI</b></summary>
-
-     From the terminal, execute the `make program` command to build and program the application using the default toolchain to the default target. You can specify a target and toolchain manually:
-      ```
-      make program TARGET=<BSP> TOOLCHAIN=<toolchain>
-      ```
-
-      Example:
-      ```
-      make program TARGET=CY8CKIT-062S2-43012 TOOLCHAIN=GCC_ARM
-      ```
-   </details>
-
-   After programming, the application starts automatically. Observe the messages on the UART terminal, and wait for the device to make all the required connections.
-
-   **Figure 1. Application initialization status**
-
-   ![](images/application_initialization.png)
 
 5. Once the initialization is complete, confirm that the message *"Press the user button (SW2) to publish "TURN ON"/"TURN OFF" on the topic 'ledstatus'..."* is printed on the UART terminal. This message may vary depending on the MQTT topic and publish messages that are configured in the *mqtt_client_config.h* file.
 
@@ -260,46 +284,6 @@ The MQTT client task handles unexpected disconnections in the MQTT or Wi-Fi conn
 | `MAX_MQTT_CONN_RETRIES`   | Maximum number of retries for MQTT connection   |
 | `MQTT_CONN_RETRY_INTERVAL_MS`   | Time interval in milliseconds in between successive MQTT connection retries   |
 
-#### Setting up the MQTT Broker
-
-<details><summary><b>AWS IoT MQTT</b></summary>
-
- 1. Set up the MQTT device (also known as a *Thing*) in the AWS IoT Core as described in the [Getting started with AWS IoT tutorial](https://docs.aws.amazon.com/iot/latest/developerguide/iot-gs.html). Please don't create neither a client certificate not a corresponding private key as they will be provided by the Secure Element
-
-    **Note:** While setting up your device, ensure that the policy associated with this device permits all MQTT operations (*iot:Connect*, *iot:Publish*, *iot:Receive*, and *iot:Subscribe*) for the resource used by this device. For testing purposes, it is recommended to have the following policy document which allows all *MQTT Policy Actions* on all *Amazon Resource Names (ARNs)*.
-    ```
-    {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Effect": "Allow",
-                "Action": "iot:*",
-                "Resource": "*"
-            }
-        ]
-    }
-    ```
-
- 2. In the *configs/mqtt_client_config.h* file, set `MQTT_BROKER_ADDRESS` to your custom endpoint on the **Settings** page of the AWS IoT Console. This has the format `ABCDEFG1234567-ats.iot.<region>.amazonaws.com`. To get you endpoint:
-   
-     - Browse to the [AWS IoT console](https://console.aws.amazon.com).
-     - In the navigation pane, choose Settings.
-     - Your AWS IoT endpoint is displayed in Endpoint. It should look like 1234567890123-ats.iot.us-east-1.amazonaws.com. Make a note of this endpoint.
-
- 3. Set the macros `MQTT_PORT` to `8883` and `MQTT_SECURE_CONNECTION` to `1` in the *configs/mqtt_client_config.h* file.
-
- 4. Download the following certificates and keys that are created and activated in the previous step:
-       - Root CA "ECC 256 bit key: Amazon Root CA 3" for AWS IoT from [CA Certificates for Server Authentication](https://docs.aws.amazon.com/iot/latest/developerguide/server-authentication.html#server-authentication-certs). In case the ECDHE_ECDSA based TLS ciphersuite is selected should be the [Amazon Root CA 3](https://www.amazontrust.com/repository/AmazonRootCA3.pem) (Default), in case the ECDHE_RSA based TLS ciphersuite is in use another CA should be selected: [Amazon Root CA 1](https://www.amazontrust.com/repository/AmazonRootCA1.pem)
-
- 5. Using these certificates and keys, enter the following parameters in *mqtt_client_config.h* in Privacy-Enhanced Mail (PEM) format:
-       - `ROOT_CA_CERTIFICATE` - Root CA certificate
-
-    You can either convert the values to strings manually following the format shown in *mqtt_client_config.h* or you can use the HTML utility available [here](https://github.com/cypresssemiconductorco/amazon-freertos/blob/master/tools/certificate_configuration/PEMfileToCString.html) to convert the certificates and keys from PEM format to C string format. You need to clone the repository from GitHub to use the utility.
-
-</details>
-
-Although this section provides instructions only for AWS Io , the MQTT Client implemented in this example is generic. It is expected to work with other MQTT Brokers with appropriate configurations. See the [list of publicly-accessible MQTT Brokers](https://github.com/mqtt/mqtt.github.io/wiki/public_brokers) that can be used for testing and prototyping purposes.
-
 ### Resources and settings
 
 **Table 1. Application resources**
@@ -323,22 +307,19 @@ Although this section provides instructions only for AWS Io , the MQTT Client im
 | **Device documentation**                                     |                                                              |
 | [PSoC 6 MCU datasheets](https://www.cypress.com/search/all?f[0]=meta_type%3Atechnical_documents&f[1]=resource_meta_type%3A575&f[2]=field_related_products%3A114026) | [PSoC 6 technical reference manuals](https://www.cypress.com/search/all/PSoC%206%20Technical%20Reference%20Manual?f[0]=meta_type%3Atechnical_documents&f[1]=resource_meta_type%3A583) |
 | **Development kits**                                         | Buy at www.cypress.com                                       |
-| [CY8CKIT-062-BLE](https://www.cypress.com/CY8CKIT-062-BLE) PSoC 6 Bluetooth LE pioneer kit | [CY8CKIT-062-WiFi-BT](https://www.cypress.com/CY8CKIT-062-WiFi-BT) PSoC 6 Wi-Fi Bluetooth pioneer kit |
-| [CY8CPROTO-063-BLE](https://www.cypress.com/CY8CPROTO-063-BLE) PSoC 6 Bluetooth LE prototyping kit | [CY8CPROTO-062-4343W](https://www.cypress.com/CY8CPROTO-062-4343W) PSoC 6 Wi-Fi Bluetooth prototyping kit |
-| [CY8CKIT-062S2-43012](https://www.cypress.com/CY8CKIT-062S2-43012) PSoC 62S2 Wi-Fi Bluetooth pioneer kit | [CY8CPROTO-062S3-4343W](https://www.cypress.com/CY8CPROTO-062S3-4343W) PSoC 62S3 Wi-Fi Bluetooth prototyping kit |
-| [CYW9P62S1-43438EVB-01](https://www.cypress.com/CYW9P62S1-43438EVB-01) PSoC 62S1 Wi-Fi Bluetooth pioneer kit | [CYW9P62S1-43012EVB-01](https://www.cypress.com/CYW9P62S1-43012EVB-01) PSoC 62S1 Wi-Fi Bluetooth pioneer kit |
-| [CY8CKIT-064B0S2-4343W](http://www.cypress.com/CY8CKIT-064B0S2-4343W) PSoC 64 "Secure Boot" Wi-Fi Bluetooth pioneer kit |            |
+| [CYSBSYSKIT-DEV-01](https://github.com/cypresssemiconductorco/TARGET_CYSBSYSKIT-DEV-01) Rapid IoT Connect Developer Kit |  |
 | **Libraries**                                                |                                                              |
 | PSoC 6 peripheral driver library (PDL) and docs  | [mtb-pdl-cat1](https://github.com/cypresssemiconductorco/mtb-pdl-cat1) on GitHub |
 | Hardware abstraction layer (HAL) Library and docs    | [mtb-hal-cat1](https://github.com/cypresssemiconductorco/mtb-hal-cat1) on GitHub |
 | Retarget IO - A utility library to retarget the standard input/output (STDIO) messages to a UART port | [retarget-io](https://github.com/cypresssemiconductorco/retarget-io) on GitHub |
 | **Middleware**                                               |                                                              |
-| MQTT Client library and documents                            | [mqtt](https://github.com/cypresssemiconductorco/mqtt) on GitHub |
-| Wi-Fi connection manager (WCM) library and documents         | [wifi-connection-manager](https://github.com/cypresssemiconductorco/wifi-connection-manager) on GitHub |
-| Wi-Fi middleware core library and documents                  | [wifi-mw-core](https://github.com/cypresssemiconductorco/wifi-mw-core) on GitHub|
-| FreeRTOS library and documents                               | [freeRTOS](https://github.com/cypresssemiconductorco/freertos) on GitHub |
-| CapSense&trade; library and documents                        | [capsense](https://github.com/cypresssemiconductorco/capsense) on GitHub |
-| Links to all PSoC 6 MCU middleware                           | [psoc6-middleware](https://github.com/cypresssemiconductorco/psoc6-middleware) on GitHub |
+| MQTT Client library and documents                            | [mqtt](https://github.com/infineon/mqtt) on GitHub |
+| Wi-Fi connection manager (WCM) library and documents         | [wifi-connection-manager](https://github.com/infineon/wifi-connection-manager) on GitHub |
+| Wi-Fi middleware core library and documents                  | [wifi-mw-core](https://github.com/infineon/wifi-mw-core) on GitHub|
+| FreeRTOS library and documents                               | [freeRTOS](https://github.com/infineon/freertos) on GitHub |
+| CapSense&trade; library and documents                        | [capsense](https://github.com/infineon/capsense) on GitHub |
+| OPTIGA™ Trust M library                                      | [optiga-trust-m](https://github.com/infineon/optiga-trust-m) on GitHub |
+| Links to all PSoC 6 MCU middleware                           | [psoc6-middleware](https://github.com/infineon/psoc6-middleware) on GitHub |
 | **Tools**                                                    |                                                              |
 | [Eclipse IDE for ModusToolbox](https://www.cypress.com/modustoolbox) | The cross-platform, Eclipse-based IDE for IoT designers that supports application configuration and development targeting converged MCU and wireless systems. |
 | [PSoC Creator™](https://www.cypress.com/products/psoc-creator-integrated-design-environment-ide) | The legacy Cypress IDE for PSoC and FM0+ MCU development. |
