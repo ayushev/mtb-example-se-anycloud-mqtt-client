@@ -118,14 +118,6 @@ Various CLI tools include a `-h` option that prints help information to the term
 
 </details>
 
-## Get you AWS IoT Endpoint address
-   
-1. Browse to the [AWS IoT console](https://console.aws.amazon.com).
-
-2. In the navigation pane, choose Settings.
-
-3. Your AWS IoT endpoint is displayed in Endpoint. It should look like 1234567890123-ats.iot.us-east-1.amazonaws.com. Make a note of this endpoint.
-   
 ## Operation
 
 1. Connect the board to your PC using the provided USB cable through the KitProg3 USB connector.
@@ -136,7 +128,7 @@ Various CLI tools include a `-h` option that prints help information to the term
 
       2. **MQTT Configuration:** Set up the MQTT Client and configure the credentials in *configs/mqtt_client_config.h*. Some of the important configuration macros are as follows:
 
-         - `MQTT_BROKER_ADDRESS`: AWS IoT Endpoint address
+         - `MQTT_BROKER_ADDRESS`: Hostname of the MQTT Broker
 
          - `MQTT_PORT`: Port number to be used for the MQTT connection. As specified by IANA (Internet Assigned Numbers Authority), port numbers assigned for MQTT protocol are *1883* for non-secure connections and *8883* for secure connections. However, MQTT Brokers may use other ports. Configure this macro as specified by the MQTT Broker.
 
@@ -144,13 +136,9 @@ Various CLI tools include a `-h` option that prints help information to the term
 
          - `MQTT_USERNAME` and `MQTT_PASSWORD`: User name and password for client authentication and authorization, if required by the MQTT Broker. However, note that this information is generally not encrypted and the password is sent in plain text. Therefore, this is not a recommended method of client authentication.
 
-         - `MQTT_SNI_HOSTNAME`
-   
-         - `CLIENT_CERTIFICATE` and `CLIENT_PRIVATE_KEY`: Certificate and private key of the MQTT Client, used for client authentication. Note that these macros are applicable only when `MQTT_SECURE_CONNECTION` is set to `1`.
-
          - `ROOT_CA_CERTIFICATE`: Root CA certificate of the MQTT Broker
 
-         See [Setting up the MQTT Broker](#setting-up-the-mqtt-broker) to learn how to configure these macros for AWS IoT and Mosquitto MQTT Brokers.
+         See [Setting up the MQTT Broker](#setting-up-the-mqtt-broker) to learn how to configure these macros for AWS IoT.
 
          For a full list of configuration macros used in this code example, see [Wi-Fi and MQTT configuration macros](#wi-fi-and-mqtt-configuration-macros).
 
@@ -235,6 +223,15 @@ The MQTT client task handles unexpected disconnections in the MQTT or Wi-Fi conn
 
 ### Configuring the MQTT Client
 
+### Get you AWS IoT Endpoint address
+   
+1. Browse to the [AWS IoT console](https://console.aws.amazon.com).
+
+2. In the navigation pane, choose Settings.
+
+3. Your AWS IoT endpoint is displayed in Endpoint. It should look like 1234567890123-ats.iot.us-east-1.amazonaws.com. Make a note of this endpoint.
+   
+      
 #### Wi-Fi and MQTT configuration macros
 
 | Macro                               |  Description              |
@@ -246,12 +243,11 @@ The MQTT client task handles unexpected disconnections in the MQTT or Wi-Fi conn
 | `MAX_WIFI_CONN_RETRIES`   | Maximum number of retries for Wi-Fi connection   |
 | `WIFI_CONN_RETRY_INTERVAL_MS`   | Time interval in milliseconds in between successive Wi-Fi connection retries   |
 | **MQTT Connection Configurations**  |  In *configs/mqtt_client_config.h*  |
-| `MQTT_BROKER_ADDRESS`      | Hostname of the MQTT Broker        |
+| `MQTT_BROKER_ADDRESS`      | Hostname of the MQTT Broker, for instance an AWS IoT Endpoint address  `234567890123-ats.iot.us-east-1.amazonaws.com`      |
 | `MQTT_PORT`                | Port number to be used for the MQTT connection. As specified by IANA (Internet Assigned Numbers Authority), port numbers assigned for MQTT protocol are *1883* for non-secure connections and *8883* for secure connections. However, MQTT Brokers may use other ports. Configure this macro as specified by the MQTT Broker.                      |
 | `MQTT_SECURE_CONNECTION`   | Set this macro to `1` if a secure (TLS) connection to the MQTT Broker is  required to be established; else `0`.         |
 | `MQTT_USERNAME` <br> `MQTT_PASSWORD`   | User name and password for client authentication and authorization, if required by the MQTT Broker. However, note that this information is generally not encrypted and the password is sent in plain text. Therefore, this is not a recommended method of client authentication. |
 | **MQTT Client Certificate Configurations**  |  In *configs/mqtt_client_config.h*  |
-| `CLIENT_CERTIFICATE` <br> `CLIENT_PRIVATE_KEY`  | Certificate and private key of the MQTT Client used for client authentication. Note that these macros are applicable only when `MQTT_SECURE_CONNECTION` is set to `1`.      |
 | `ROOT_CA_CERTIFICATE`      |  Root CA certificate of the MQTT Broker |
 | **MQTT Message Configurations**    |  In *configs/mqtt_client_config.h*  |
 | `MQTT_PUB_TOPIC`           | MQTT topic to which the messages are published by the Publisher task to the MQTT Broker    |
@@ -267,7 +263,7 @@ The MQTT client task handles unexpected disconnections in the MQTT or Wi-Fi conn
 | `MQTT_TIMEOUT_MS`            | Timeout in milliseconds for MQTT operations in this example   |
 | `MQTT_KEEP_ALIVE_SECONDS`    | The keepalive interval in seconds used for MQTT ping request   |
 | `MQTT_ALPN_PROTOCOL_NAME`   | The Application Layer Protocol Negotiation (ALPN) protocol name to be used that is supported by the MQTT Broker in use. Note that this is an optional macro for most of the use cases. <br>Per IANA, the port numbers assigned for MQTT protocol are 1883 for non-secure connections and 8883 for secure connections. In some cases, there is a need to use other ports for MQTT like port 443 (which is reserved for HTTPS). ALPN is an extension to TLS that allows many protocols to be used over a secure connection.     |
-| `MQTT_SNI_HOSTNAME`   | The Server Name Indication (SNI) host name to be used during the Transport Layer Security (TLS) connection as specified by the MQTT Broker. <br>SNI is extension to the TLS protocol. As required by some MQTT Brokers, SNI typically includes the hostname in the "Client Hello" message sent during TLS handshake.     |
+| `MQTT_SNI_HOSTNAME`   | The Server Name Indication (SNI) host name to be used during the Transport Layer Security (TLS) connection as specified by the MQTT Broker. <br>SNI is extension to the TLS protocol. As required by some MQTT Brokers, SNI typically includes the hostname in the "Client Hello" message sent during TLS handshake. For the AWS IoT example should be the same value as in the `MQTT_BROKER_ADDRESS`     |
 | `MQTT_NETWORK_BUFFER_SIZE`   | A network buffer is allocated for sending and receiving MQTT packets over the network. Specify the size of this buffer using this macro. Note that the minimum buffer size is defined by `CY_MQTT_MIN_NETWORK_BUFFER_SIZE` macro in the MQTT library.  |
 | `MAX_MQTT_CONN_RETRIES`   | Maximum number of retries for MQTT connection   |
 | `MQTT_CONN_RETRY_INTERVAL_MS`   | Time interval in milliseconds in between successive MQTT connection retries   |
