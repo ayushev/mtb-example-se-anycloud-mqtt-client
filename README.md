@@ -1,8 +1,8 @@
-# AnyCloud: MQTT Client
+# AnyCloud Connectivity using a Secure Element: MQTT Client
 
-This code example demonstrates implementing an MQTT Client using the [AnyCloud MQTT Client library](https://github.com/cypresssemiconductorco/mqtt). The library uses the AWS IoT Device SDK MQTT Client library that includes an MQTT 3.1.1 Client.
+This code example demonstrates implementing an MQTT Client using the [AnyCloud MQTT Client library](https://github.com/cypresssemiconductorco/mqtt). The library uses the AWS IoT Device SDK MQTT Client library that includes an MQTT 3.1.1 Client and OPTIGA Trust M Secure Element
 
-In this example, the MQTT Client RTOS task establishes a connection with the configured MQTT Broker, and creates two tasks - Publisher and Subscriber. The Publisher task publishes messages on a topic when the user button is pressed on the kit. The Subscriber task subscribes to the same topic and controls the user LED based on the messages received from the MQTT Broker. In case of unexpected disconnection of MQTT or Wi-Fi connection, the application executes a reconnection mechanism to restore the connection.
+In this example, the MQTT Client RTOS task reads out a pre-provisioned X.509 certificate out of the secure element and populates internal MQTT Client configuration to establishe a connection with the configured MQTT Broker, and creates two tasks - Publisher and Subscriber. The Publisher task publishes messages on a topic when the user button is pressed on the kit. The Subscriber task subscribes to the same topic and controls the user LED based on the messages received from the MQTT Broker. In case of unexpected disconnection of MQTT or Wi-Fi connection, the application executes a reconnection mechanism to restore the connection. In addtion all ECDSA and ECDHE related operations performed as part of this demo; i.e. as part of the TLS channel establishment, automatically accelerated on the Secure Element.
 
 
 **Sequence of operation**
@@ -22,9 +22,9 @@ In this example, the MQTT Client RTOS task establishes a connection with the con
 
 ## Requirements
 
-- [ModusToolbox&trade; software](https://www.cypress.com/products/modustoolbox-software-environment) v2.2 or later
+- [ModusToolbox&trade; software](https://www.cypress.com/products/modustoolbox-software-environment) v2.3 or later
 
-    **Note:** This code example version requires ModusToolbox software version 2.2 or later and is not backward compatible with v2.1 or older versions. If you cannot move to ModusToolbox v2.2, use the latest compatible version of this example: [latest-v1.X](https://github.com/cypresssemiconductorco/mtb-example-anycloud-mqtt-client/tree/latest-v1.X).
+    **Note:** This code example version requires ModusToolbox software version 2.3 or later and is not backward compatible with v2.2 or older versions.
 
 - Board support package (BSP) minimum required version: 2.0.0
 - Programming language: C
@@ -40,15 +40,11 @@ In this example, the MQTT Client RTOS task establishes a connection with the con
 
 ## Supported kits (make variable 'TARGET')
 
-- [PSoC 6 Wi-Fi Bluetooth prototyping kit](https://www.cypress.com/CY8CPROTO-062-4343W) (`CY8CPROTO-062-4343W`) - Default value of `TARGET`
-- [PSoC 62S2 Wi-Fi Bluetooth pioneer kit](https://www.cypress.com/CY8CKIT-062S2-43012) (`CY8CKIT-062S2-43012`)
-- [PSoC 6 Wi-Fi Bluetooth pioneer kit](https://www.cypress.com/CY8CKIT-062-WiFi-BT) (`C8CKIT-062-WIFI-BT`)
+- Rapid IoT Connect Developer Kit (`CYSBSYSKIT-DEV-01`) - Default value of TARGET
 
 ## Hardware setup
 
 This example uses the board's default configuration. See the kit user guide to ensure that the board is configured correctly.
-
-**Note:** The PSoC 6 Wi-Fi-Bluetooth pioneer kit (CY8CKIT-062-WIFI-BT) ships with KitProg2 installed. The ModusToolbox software requires KitProg3. Before using this code example, make sure that the board is upgraded to KitProg3. The tool and instructions are available in the [Firmware Loader](https://github.com/cypresssemiconductorco/Firmware-loader) GitHub repository. If you do not upgrade, you will see an error like "unable to find CMSIS-DAP device" or "KitProg firmware is out of date".
 
 ## Software setup
 
@@ -122,6 +118,14 @@ Various CLI tools include a `-h` option that prints help information to the term
 
 </details>
 
+## Get you AWS IoT Endpoint address
+   
+1. Browse to the [AWS IoT console](https://console.aws.amazon.com).
+
+2. In the navigation pane, choose Settings.
+
+3. Your AWS IoT endpoint is displayed in Endpoint. It should look like 1234567890123-ats.iot.us-east-1.amazonaws.com. Make a note of this endpoint.
+   
 ## Operation
 
 1. Connect the board to your PC using the provided USB cable through the KitProg3 USB connector.
@@ -132,7 +136,7 @@ Various CLI tools include a `-h` option that prints help information to the term
 
       2. **MQTT Configuration:** Set up the MQTT Client and configure the credentials in *configs/mqtt_client_config.h*. Some of the important configuration macros are as follows:
 
-         - `MQTT_BROKER_ADDRESS`: Hostname of the MQTT Broker
+         - `MQTT_BROKER_ADDRESS`: AWS IoT Endpoint address
 
          - `MQTT_PORT`: Port number to be used for the MQTT connection. As specified by IANA (Internet Assigned Numbers Authority), port numbers assigned for MQTT protocol are *1883* for non-secure connections and *8883* for secure connections. However, MQTT Brokers may use other ports. Configure this macro as specified by the MQTT Broker.
 
@@ -140,6 +144,8 @@ Various CLI tools include a `-h` option that prints help information to the term
 
          - `MQTT_USERNAME` and `MQTT_PASSWORD`: User name and password for client authentication and authorization, if required by the MQTT Broker. However, note that this information is generally not encrypted and the password is sent in plain text. Therefore, this is not a recommended method of client authentication.
 
+         - `MQTT_SNI_HOSTNAME`
+   
          - `CLIENT_CERTIFICATE` and `CLIENT_PRIVATE_KEY`: Certificate and private key of the MQTT Client, used for client authentication. Note that these macros are applicable only when `MQTT_SECURE_CONNECTION` is set to `1`.
 
          - `ROOT_CA_CERTIFICATE`: Root CA certificate of the MQTT Broker
