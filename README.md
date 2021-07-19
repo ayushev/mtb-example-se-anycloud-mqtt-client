@@ -174,7 +174,7 @@ Various CLI tools include a `-h` option that prints help information to the term
 
         * Open a terminal program and select the KitProg3 COM port. Set the serial port parameters to 8N1 and 115200 baud.
         
-        * Save the output X.509 certificate which is framed with `-----BEGIN CERTIFICATE-----` and `-----BEGIN CERTIFICATE-----` you see on the terminal screen. This is a pre-provisioned certificate which belongs to your board and follow the steps mentioned in the terminal output there.
+        * Notice that you see on the terminal screen. This is a pre-provisioned certificate which belongs to your board and follow the steps mentioned in the terminal output after the certificate output.
 
         * In the *configs/mqtt_client_config.h* file, set `MQTT_BROKER_ADDRESS` and `MQTT_SNI_HOSTNAME` to your custom endpoint on the **Settings** page of the AWS IoT Console. This has the format `ABCDEFG1234567-ats.iot.<region>.amazonaws.com`. To get you endpoint:
 
