@@ -222,15 +222,6 @@ The MQTT client task handles unexpected disconnections in the MQTT or Wi-Fi conn
 **Note:** The CY8CPROTO-062-4343W board shares the same GPIO for the user button (USER BTN) and the CYW4343W host wakeup pin. Because this example uses the GPIO for interfacing with the user button to toggle the LED, the SDIO interrupt to wake up the host is disabled by setting `CY_WIFI_HOST_WAKE_SW_FORCE` to '0' in the Makefile through the `DEFINES` variable.
 
 ### Configuring the MQTT Client
-
-### Get you AWS IoT Endpoint address
-   
-1. Browse to the [AWS IoT console](https://console.aws.amazon.com).
-
-2. In the navigation pane, choose Settings.
-
-3. Your AWS IoT endpoint is displayed in Endpoint. It should look like 1234567890123-ats.iot.us-east-1.amazonaws.com. Make a note of this endpoint.
-   
       
 #### Wi-Fi and MQTT configuration macros
 
@@ -243,11 +234,12 @@ The MQTT client task handles unexpected disconnections in the MQTT or Wi-Fi conn
 | `MAX_WIFI_CONN_RETRIES`   | Maximum number of retries for Wi-Fi connection   |
 | `WIFI_CONN_RETRY_INTERVAL_MS`   | Time interval in milliseconds in between successive Wi-Fi connection retries   |
 | **MQTT Connection Configurations**  |  In *configs/mqtt_client_config.h*  |
-| `MQTT_BROKER_ADDRESS`      | Hostname of the MQTT Broker, for instance an AWS IoT Endpoint address  `234567890123-ats.iot.us-east-1.amazonaws.com`      |
+| `MQTT_BROKER_ADDRESS`      | Hostname of the MQTT Broker        |
 | `MQTT_PORT`                | Port number to be used for the MQTT connection. As specified by IANA (Internet Assigned Numbers Authority), port numbers assigned for MQTT protocol are *1883* for non-secure connections and *8883* for secure connections. However, MQTT Brokers may use other ports. Configure this macro as specified by the MQTT Broker.                      |
 | `MQTT_SECURE_CONNECTION`   | Set this macro to `1` if a secure (TLS) connection to the MQTT Broker is  required to be established; else `0`.         |
 | `MQTT_USERNAME` <br> `MQTT_PASSWORD`   | User name and password for client authentication and authorization, if required by the MQTT Broker. However, note that this information is generally not encrypted and the password is sent in plain text. Therefore, this is not a recommended method of client authentication. |
 | **MQTT Client Certificate Configurations**  |  In *configs/mqtt_client_config.h*  |
+| `CLIENT_CERTIFICATE` <br> `CLIENT_PRIVATE_KEY`  | Certificate and private key of the MQTT Client used for client authentication. Note that these macros are applicable only when `MQTT_SECURE_CONNECTION` is set to `1`.      |
 | `ROOT_CA_CERTIFICATE`      |  Root CA certificate of the MQTT Broker |
 | **MQTT Message Configurations**    |  In *configs/mqtt_client_config.h*  |
 | `MQTT_PUB_TOPIC`           | MQTT topic to which the messages are published by the Publisher task to the MQTT Broker    |
@@ -263,7 +255,7 @@ The MQTT client task handles unexpected disconnections in the MQTT or Wi-Fi conn
 | `MQTT_TIMEOUT_MS`            | Timeout in milliseconds for MQTT operations in this example   |
 | `MQTT_KEEP_ALIVE_SECONDS`    | The keepalive interval in seconds used for MQTT ping request   |
 | `MQTT_ALPN_PROTOCOL_NAME`   | The Application Layer Protocol Negotiation (ALPN) protocol name to be used that is supported by the MQTT Broker in use. Note that this is an optional macro for most of the use cases. <br>Per IANA, the port numbers assigned for MQTT protocol are 1883 for non-secure connections and 8883 for secure connections. In some cases, there is a need to use other ports for MQTT like port 443 (which is reserved for HTTPS). ALPN is an extension to TLS that allows many protocols to be used over a secure connection.     |
-| `MQTT_SNI_HOSTNAME`   | The Server Name Indication (SNI) host name to be used during the Transport Layer Security (TLS) connection as specified by the MQTT Broker. <br>SNI is extension to the TLS protocol. As required by some MQTT Brokers, SNI typically includes the hostname in the "Client Hello" message sent during TLS handshake. For the AWS IoT example should be the same value as in the `MQTT_BROKER_ADDRESS`     |
+| `MQTT_SNI_HOSTNAME`   | The Server Name Indication (SNI) host name to be used during the Transport Layer Security (TLS) connection as specified by the MQTT Broker. <br>SNI is extension to the TLS protocol. As required by some MQTT Brokers, SNI typically includes the hostname in the "Client Hello" message sent during TLS handshake.     |
 | `MQTT_NETWORK_BUFFER_SIZE`   | A network buffer is allocated for sending and receiving MQTT packets over the network. Specify the size of this buffer using this macro. Note that the minimum buffer size is defined by `CY_MQTT_MIN_NETWORK_BUFFER_SIZE` macro in the MQTT library.  |
 | `MAX_MQTT_CONN_RETRIES`   | Maximum number of retries for MQTT connection   |
 | `MQTT_CONN_RETRY_INTERVAL_MS`   | Time interval in milliseconds in between successive MQTT connection retries   |
@@ -272,7 +264,7 @@ The MQTT client task handles unexpected disconnections in the MQTT or Wi-Fi conn
 
 <details><summary><b>AWS IoT MQTT</b></summary>
 
- 1. Set up the MQTT device (also known as a *Thing*) in the AWS IoT Core as described in the [Getting started with AWS IoT tutorial](https://docs.aws.amazon.com/iot/latest/developerguide/iot-gs.html).
+ 1. Set up the MQTT device (also known as a *Thing*) in the AWS IoT Core as described in the [Getting started with AWS IoT tutorial](https://docs.aws.amazon.com/iot/latest/developerguide/iot-gs.html). Please don't create neither a client certificate not a corresponding private key.
 
     **Note:** While setting up your device, ensure that the policy associated with this device permits all MQTT operations (*iot:Connect*, *iot:Publish*, *iot:Receive*, and *iot:Subscribe*) for the resource used by this device. For testing purposes, it is recommended to have the following policy document which allows all *MQTT Policy Actions* on all *Amazon Resource Names (ARNs)*.
     ```
@@ -288,88 +280,25 @@ The MQTT client task handles unexpected disconnections in the MQTT or Wi-Fi conn
     }
     ```
 
- 2. In the *configs/mqtt_client_config.h* file, set `MQTT_BROKER_ADDRESS` to your custom endpoint on the **Settings** page of the AWS IoT Console. This has the format `ABCDEFG1234567.iot.<region>.amazonaws.com`.
+ 2. In the *configs/mqtt_client_config.h* file, set `MQTT_BROKER_ADDRESS` to your custom endpoint on the **Settings** page of the AWS IoT Console. This has the format `ABCDEFG1234567-ats.iot.<region>.amazonaws.com`. To get you endpoint:
+   
+     - Browse to the [AWS IoT console](https://console.aws.amazon.com).
+     - In the navigation pane, choose Settings.
+     - Your AWS IoT endpoint is displayed in Endpoint. It should look like 1234567890123-ats.iot.us-east-1.amazonaws.com. Make a note of this endpoint.
 
  3. Set the macros `MQTT_PORT` to `8883` and `MQTT_SECURE_CONNECTION` to `1` in the *configs/mqtt_client_config.h* file.
 
  4. Download the following certificates and keys that are created and activated in the previous step:
-       - A certificate for the AWS IoT Thing - *xxxxxxxxxx.cert.pem*
-       - A public key - *xxxxxxxxxx.public.key*
-       - A private key - *xxxxxxxxxx.private.key*
-       - Root CA "RSA 2048 bit key: Amazon Root CA 1" for AWS IoT from [CA Certificates for Server Authentication](https://docs.aws.amazon.com/iot/latest/developerguide/server-authentication.html#server-authentication-certs).
+       - Root CA "ECC 256 bit key: Amazon Root CA 3" for AWS IoT from [CA Certificates for Server Authentication](https://docs.aws.amazon.com/iot/latest/developerguide/server-authentication.html#server-authentication-certs). In case the ECDHE_ECDSA based TLS ciphersuite is selected should be the [Amazon Root CA 3](https://www.amazontrust.com/repository/AmazonRootCA3.pem) (Default), in case the ECDHE_RSA based TLS ciphersuite is in use another CA should be selected: [Amazon Root CA 1](https://www.amazontrust.com/repository/AmazonRootCA1.pem)
 
  5. Using these certificates and keys, enter the following parameters in *mqtt_client_config.h* in Privacy-Enhanced Mail (PEM) format:
-       - `CLIENT_CERTIFICATE` - *xxxxxxxxxx.cert.pem*
-       - `CLIENT_PRIVATE_KEY` - *xxxxxxxxxx.private.key*
        - `ROOT_CA_CERTIFICATE` - Root CA certificate
 
     You can either convert the values to strings manually following the format shown in *mqtt_client_config.h* or you can use the HTML utility available [here](https://github.com/cypresssemiconductorco/amazon-freertos/blob/master/tools/certificate_configuration/PEMfileToCString.html) to convert the certificates and keys from PEM format to C string format. You need to clone the repository from GitHub to use the utility.
 
 </details>
 
-<details><summary><b>Local Mosquitto Broker</b></summary>
-
-Download and install the Mosquitto Broker for your computer from https://mosquitto.org/download. The following instructions help in setting up the Mosquitto Broker for a secure connection with the client using self-signed SSL certificates. This requires **OpenSSL** which is already preloaded in the ModusToolbox installation. Run the below commands with a CLI (on Windows, use the command line "modus-shell" program provided in the ModusToolbox installation instead of a standard Windows command-line application).
-
-1. Generate the CA certificate for the Mosquitto Broker / Server using the following commands. Follow the instructions in the command window to provide the details required.
-   ```
-   openssl genrsa -out ca.key 2048
-   openssl req -new -x509 -sha256 -nodes -days 365 -key ca.key -out ca.crt
-   ```
-
-2. Generate the server key pair and server certificate (signed using the CA certificate from step 1) for the Mosquitto Broker using the following commands. Follow the instructions in the command window to provide the details required.
-   ```
-   openssl genrsa -out server.key 2048
-   openssl req -new -nodes -sha256 -key server.key -out server.csr
-   openssl x509 -req -sha256 -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 365
-   ```
-
-   At this stage, the certificates and keys required by the Mosquitto broker are ready. The files used from the above steps are *ca.crt*, *server.crt*, and *server.key*.
-
-3. Create a configuration file for the Mosquitto Broker - *mosquitto.conf* with the following contents and provide the path to the generated credentials (*ca.crt*, *server.crt*, and *server.key*) under the SSL settings section.
-   ```
-   # Config file for mosquitto
-   connection_messages true
-   per_listener_settings true
-
-   listener 8883
-   require_certificate true
-   use_identity_as_username true
-   allow_anonymous false
-
-   # SSL settings
-   cafile <path-to-ca.crt>
-   keyfile <path-to-server.key>
-   certfile <path-to-server.crt>
-   ```
-
-4. Start the Mosquitto Broker with the configurations from the above *mosquitto.conf* file using the following command. If the *mosquitto.conf* file is present in a different location from where the command is run, provide the path to the config file after the `-c` argument in the following command:
-   ```
-   mosquitto -v -c mosquitto.conf
-   ```
-
-5. Generate the client certificates using the following commands. Follow the instructions in the command window to provide the details required. Note that the last command requires *ca.crt* and *ca.key* files generated in Step 2.
-   ```
-   openssl genrsa -out client.key 2048
-   openssl req -new -out client.csr -key client.key
-   openssl x509 -req -in client.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out client.crt -days 365
-   ```
-
-6. Configure the MQTT Client configurations in *configs/mqtt_client_config.h* as follows:
-
-     - `MQTT_BROKER_ADDRESS` as the IP address of the computer running the Mosquitto Broker (the computer on which Step 4 is performed).
-
-     - `MQTT_PORT` as `8883`.
-
-     - `MQTT_SECURE_CONNECTION` as `1`.
-
-     - Using the client certificate (*client.crt*), private key (*client.key*), and root CA certificate (*ca.crt*) from the above steps, configure the `CLIENT_CERTIFICATE`, `CLIENT_PRIVATE_KEY`, and `ROOT_CA_CERTIFICATE` macros respectively.
-
-       You can either convert the PEM format values to strings manually following the format shown in *mqtt_client_config.h* or you can use the HTML utility available [here](https://github.com/cypresssemiconductorco/amazon-freertos/blob/master/tools/certificate_configuration/PEMfileToCString.html) to convert the certificates and keys from PEM format to C string format. You need to clone the repository from GitHub to use the utility.
-
-</details>
-
-Although this section provides instructions only for AWS IoT and local Mosquitto Broker, the MQTT Client implemented in this example is generic. It is expected to work with other MQTT Brokers with appropriate configurations. See the [list of publicly-accessible MQTT Brokers](https://github.com/mqtt/mqtt.github.io/wiki/public_brokers) that can be used for testing and prototyping purposes.
+Although this section provides instructions only for AWS Io , the MQTT Client implemented in this example is generic. It is expected to work with other MQTT Brokers with appropriate configurations. See the [list of publicly-accessible MQTT Brokers](https://github.com/mqtt/mqtt.github.io/wiki/public_brokers) that can be used for testing and prototyping purposes.
 
 ### Resources and settings
 
@@ -426,11 +355,7 @@ Document title: *CE229889* - *AnyCloud: MQTT Client*
 
 | Version | Description of Change |
 | ------- | --------------------- |
-| 1.0.0   | New code example      |
-| 1.1.0   | Minor bug fixes and Makefile updates to sync with BSP changes. |
-| 2.0.0   | Major update to support ModusToolbox software v2.2, added support for Mosquitto Broker.<br /> This version is not backward compatible with ModusToolbox software v2.1.  |
-| 2.1.0   | Updated the configuration file to support MbedTLS v2.22.0  |
-| 3.0.0   | Major update to support MQTT library v3.X and FreeRTOS v10.3.1<br /> Enhancements to the code example functionality like Wi-Fi and MQTT reconnection mechanism.  |
+| 1.2.0   | New code example      |
 ------
 
 All other trademarks or registered trademarks referenced herein are the property of their respective owners.
