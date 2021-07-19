@@ -51,7 +51,7 @@
 
 /***************** MQTT CLIENT CONNECTION CONFIGURATION MACROS *****************/
 /* MQTT Broker/Server address and port used for the MQTT connection. */
-#define MQTT_BROKER_ADDRESS               "a2qabkxxyoigng-ats.iot.us-east-1.amazonaws.com"
+#define MQTT_BROKER_ADDRESS               "MY_MQTT_BROKER_ADDRESS"
 #define MQTT_PORT                         8883
 
 /* Set this macro to 1 if a secure (TLS) connection to the MQTT Broker is  
@@ -145,7 +145,7 @@
  * Uncomment the below line and specify the SNI Host Name to use this extension
  * as specified by the MQTT Broker.
  */
-#define MQTT_SNI_HOSTNAME                 "a2qabkxxyoigng-ats.iot.us-east-1.amazonaws.com"
+#define MQTT_SNI_HOSTNAME                 "MY_MQTT_BROKER_ADDRESS"
 
 /* A Network buffer is allocated for sending and receiving MQTT packets over 
  * the network. Specify the size of this buffer using this macro.
@@ -182,7 +182,10 @@
 "rQ0EI1fNGzpZyfQgpVTv26AnlqqumIPzhw==\n" \
 "-----END EC PRIVATE KEY-----"
 
-/* PEM-encoded Root CA certificate */
+/* PEM-encoded Root CA certificate 
+ * This is an ECC NIST P256 Amazon Root CA3 certificate, as this setup
+ * uses a dedicated 
+ */
 #define ROOT_CA_CERTIFICATE     \
 "-----BEGIN CERTIFICATE-----\n" \
 "MIIBtjCCAVugAwIBAgITBmyf1XSXNmY/Owua2eiedgPySjAKBggqhkjOPQQDAjA5\n" \

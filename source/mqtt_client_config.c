@@ -170,6 +170,9 @@ void use_optiga_certificate(void)
 {
     read_certificate_from_optiga(CERTIFICATE, &CERTIFICATE_SIZE);
     printf("Your certificate is:\n%s\n",CERTIFICATE);
+    printf("Save the entire base64 encoded certificate starting from \n");
+    printf("-----BEGIN CERTIFICATE----- till -----END CERTIFICATE----- \n");
+    printf("in a certificate.pem file on you file system.");
     printf("To register your certificate at AWS IoT:\n");
     printf("  1) In the navigation pane for AWS IoT console, choose Secure\n");
     printf("     and then choose Certificates.\n");
@@ -180,7 +183,7 @@ void use_optiga_certificate(void)
     printf("     a Certificate Authority with AWS.\n");
     printf("  5) On the Register existing device certificates page, \n");
     printf("     choose Select certificates and choose the certificate that you \n");
-    printf("     downloaded from Infineon Toolbox.\n");
+    printf("     recently saved - certificate.pem \n");
     printf("  6) Ensure that the Activate All option is selected and click on \n");
     printf("     Register certificate.\n");
     printf("  7) Choose Actions and Attach policy to attach the policy that you \n");
