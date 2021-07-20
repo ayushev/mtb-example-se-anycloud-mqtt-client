@@ -253,11 +253,33 @@ There are several key points which should be considered:
        * I2C Pins: supported boards define `CYBSP_I2C_SCL_OPTIGA` and `CYBSP_I2C_SDA_OPTIGA` in their BSP, alternativly you can define in the [`optiga_lib_mtb_config.h`](https://github.com/ayushev/mtb-example-se-anycloud-mqtt-client/blob/8149c37ae4026f28037116370580b766ec5f58b8/source/optiga_lib_config_mtb.h#L161-L162) file your own definitions for them.
        * Reset and Power Control Pins: the OPTIGA Trust secure element can be controlled via a deddicated reset and a power control line, for instance the latter is used for entering a so-called hibernation mode on the chip. Define `OPTIGA_TRUSTM_VDD` and `OPTIGA_TRUSTM_RST` with corresponding GPIOs in your `optiga_lib_config_mtb.h` file. In addition to this change the reset type also in the same [configuration file](https://github.com/ayushev/mtb-example-se-anycloud-mqtt-client/blob/master/source/optiga_lib_config_mtb.h#L114) to 0 if you have both defined, in case you have only the reset line connected this value should be 2.
    2. Software configuration
-       * Initialisation in a FreeRTOS task
-       * Certificate extraction and MQTT connection configuration
+       * **Initialisation in a FreeRTOS task**
+           * If the [Makefile](https://github.com/ayushev/mtb-example-se-anycloud-mqtt-client/blob/987b08e691fa3d1a66c0f8324c4fa5c2a00dce9e/Makefile#L81) defines `PSOC_FREERTOS` this means that the OPTIGA Trust library will use a FreeRTOS based Platform Abstraction Layer for the communication, this leads to the following guidelines.
+           * Always initialise the Secure Element from a task
+           * Give enough Stack to the OPTIGA Trust task, depending on the configuration it needs not more than 3072 bytes
+           * Don't start any MQTT related tasks before the Secure Element will be initialised
+       * **Certificate extraction and MQTT connection configuration**
+           * Right after the Secure Element will be initialised you might need to extract the certificate out of the chip and assign it to the internal MQTT client configuration. An example of this can be found [here](https://github.com/ayushev/mtb-example-se-anycloud-mqtt-client/blob/987b08e691fa3d1a66c0f8324c4fa5c2a00dce9e/source/mqtt_client_config.c#L171). 
        * mbedTLS configuration
            * Handshake methods
+               * For a successfull TLS communication make sure only supported handshake methods are selected in you mbedtls configuration file. For this **either undefine** the following
+                   * `MBEDTLS_KEY_EXCHANGE_DHE_PSK_ENABLED`
+                   * `MBEDTLS_KEY_EXCHANGE_ECDHE_PSK_ENABLED`
+                   * `MBEDTLS_KEY_EXCHANGE_RSA_PSK_ENABLED`
+                   * `MBEDTLS_KEY_EXCHANGE_RSA_ENABLED`
+                   * `MBEDTLS_KEY_EXCHANGE_DHE_RSA_ENABLED`
+                   * `MBEDTLS_KEY_EXCHANGE_ECDH_RSA_ENABLED`
+                   * `MBEDTLS_KEY_EXCHANGE_ECDHE_RSA_ENABLED`, **or define** the following
+                   * `MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED`
+               * In case of a WiFi online provisioning your example will try to esatblish a conneciton with several clouds, thus restricts usage of many handshake methods. For instance the `MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED` method might be not available. You can opt to the `MBEDTLS_KEY_EXCHANGE_ECDHE_RSA_ENABLED` and change the Root CA configuration `ROOT_CA_CERTIFICATE` to use the Amazon Root CA 1 (RSA 2048 based), instead of the default value of Amazon Root CA 3 (ECC 256 based)
            * Cryptography (ECDSA, ECDHE, Random) functions call routing
+               * Your mbedtls configuration file should have the following macros defined
+                   * `MBEDTLS_ECDH_GEN_PUBLIC_ALT`
+                   * `MBEDTLS_ECDSA_SIGN_ALT`
+                   * `MBEDTLS_ECDSA_VERIFY_ALT`
+                   * `MBEDTLS_ECDH_COMPUTE_SHARED_ALT`
+                   * `MBEDTLS_ECDSA_GENKEY_ALT`
+               * In addtion to above macros make sure your build includes `$(optiga-trust-m)/examples/mbedtls_port` files
 
 ### Configuring the MQTT Client
       
