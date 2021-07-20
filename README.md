@@ -1,4 +1,4 @@
-# AnyCloud Connectivity using a Secure Element: MQTT Client
+# AnyCloud Connectivity using a Secure Element: </br> MQTT Client
 
 This code example demonstrates implementing an MQTT Client using the [AnyCloud MQTT Client library](https://github.com/cypresssemiconductorco/mqtt). The library uses the AWS IoT Device SDK MQTT Client library that includes an MQTT 3.1.1 Client and OPTIGA Trust M Secure Element
 
@@ -227,8 +227,10 @@ You can debug the example to step through the code. In the IDE, use the **\<Appl
 
 ## Design and implementation
 
-This example implements three RTOS tasks: MQTT Client, Publisher, and Subscriber. The main function initializes the BSP and the retarget-io library, and creates the MQTT Client task.
+This example implements four RTOS tasks: OPTIGA Trust, MQTT Client, Publisher, and Subscriber. The main function initializes the BSP and the retarget-io library, and creates the OPTIGA Trust task.
 
+The OPTIGA Trust task initializes the secure element, extracts pre-provisioned public key certificate out of ther chip and populates with it internal configuration for the secure communication. Afterwards it initializes the MQTT Client task.
+               
 The MQTT Client task initializes the Wi-Fi connection manager (WCM) and connects to a Wi-Fi access point (AP) using the Wi-Fi network credentials that are configured in *wifi_config.h*. Upon a successful Wi-Fi connection, the task initializes the MQTT library and establishes a connection with the MQTT Broker/Server.
 
 The MQTT connection is configured to be secure by default; the secure connection requires a client certificate, a private key, and the Root CA certificate of the MQTT Broker that are configured in *mqtt_client_config.h*.
@@ -242,8 +244,20 @@ The Publisher task sets up the user button GPIO and configures an interrupt for 
 An MQTT event callback function `mqtt_event_callback()` invoked by the MQTT library for events like MQTT disconnection and incoming MQTT subscription messages from the MQTT broker. In the case of an MQTT disconnection, the MQTT client task is informed about the disconnection using a message queue. When an MQTT subscription message is received, the subscriber callback function implemented in *subscriber_task.c* is invoked to handle the incoming MQTT message.
 
 The MQTT client task handles unexpected disconnections in the MQTT or Wi-Fi connections by initiating reconnection to restore the Wi-Fi and/or MQTT connections. Upon failure, the Publisher and Subscriber tasks are deleted, cleanup operations of various libraries are performed, and then the MQTT client task is terminated.
-
-**Note:** The CY8CPROTO-062-4343W board shares the same GPIO for the user button (USER BTN) and the CYW4343W host wakeup pin. Because this example uses the GPIO for interfacing with the user button to toggle the LED, the SDIO interrupt to wake up the host is disabled by setting `CY_WIFI_HOST_WAKE_SW_FORCE` to '0' in the Makefile through the `DEFINES` variable.
+               
+## How to enable your Anycloud based example to use the OPTIGA Trust library
+               
+There are several key points which should be considered:
+   
+   1. Hardware configuration
+       * I2C Pins: supported boards define `CYBSP_I2C_SCL_OPTIGA` and `CYBSP_I2C_SDA_OPTIGA` in their BSP, alternativly you can define in the [`optiga_lib_mtb_config.h`](https://github.com/ayushev/mtb-example-se-anycloud-mqtt-client/blob/8149c37ae4026f28037116370580b766ec5f58b8/source/optiga_lib_config_mtb.h#L161-L162) file your own definitions for them.
+       * Reset and Power Control Pins: the OPTIGA Trust secure element can be controlled via a deddicated reset and a power control line, for instance the latter is used for entering a so-called hibernation mode on the chip. Define `OPTIGA_TRUSTM_VDD` and `OPTIGA_TRUSTM_RST` with corresponding GPIOs in your `optiga_lib_config_mtb.h` file. In addition to this change the reset type also in the same [configuration file](https://github.com/ayushev/mtb-example-se-anycloud-mqtt-client/blob/master/source/optiga_lib_config_mtb.h#L114) to 0 if you have both defined, in case you have only the reset line connected this value should be 2.
+   2. Software configuration
+       * Initialisation in a FreeRTOS task
+       * Certificate extraction and MQTT connection configuration
+       * mbedTLS configuration
+           * Handshake methods
+           * Cryptography (ECDSA, ECDHE, Random) functions call routing
 
 ### Configuring the MQTT Client
       
