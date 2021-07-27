@@ -178,7 +178,7 @@ Various CLI tools include a `-h` option that prints help information to the term
           <details><summary>TeraTerm output</summary>
              <img src="https://github.com/ayushev/mtb-example-se-anycloud-mqtt-client/raw/master/images/application_initialization.png">
           </details>
- This is a base64 encoded pre-provisioned certificate (starting from `-----BEGIN CERTIFICATE-----` till `-----END CERTIFICATE-----`) which belongs to your board. Please follow the steps mentioned in the terminal output after the certificate output.
+            This is a base64 encoded pre-provisioned certificate (starting from `-----BEGIN CERTIFICATE-----` till `-----END CERTIFICATE-----`) which belongs to your board. Please follow the steps mentioned in the terminal output after the certificate output.
 
         * In the *configs/mqtt_client_config.h* file, set `MQTT_BROKER_ADDRESS` and `MQTT_SNI_HOSTNAME` to your custom endpoint on the **Settings** page of the AWS IoT Console. This has the format `ABCDEFG1234567-ats.iot.<region>.amazonaws.com`. To get you endpoint:
 
